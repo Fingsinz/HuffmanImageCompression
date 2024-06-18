@@ -1,40 +1,37 @@
-#pragma once
+ï»¿#pragma once
 
 #include <fstream>
-#include <queue>
 #include <string>
-#include <unordered_map>
 #include <vector>
-#include <Windows.h>
 
 class BMP
 {
 public:
 #pragma pack(2)
-	// BMP ÎÄ¼şÍ·
+	// BMP æ–‡ä»¶å¤´
 	struct BMPFile
 	{
-		unsigned short type;		// ÎÄ¼şÀàĞÍ
-		unsigned long size;			// ÎÄ¼ş´óĞ¡
-		unsigned short reserved1;	// Ô¤ÁôÇøÓò1
-		unsigned short reserved2;	// Ô¤ÁôÇøÓò2
-		unsigned long offset;		// Í¼ÏñÊı¾İ¿ªÊ¼Î»ÖÃµÄÆ«ÒÆ
+		unsigned short type;		// æ–‡ä»¶ç±»å‹
+		unsigned long size;			// æ–‡ä»¶å¤§å°
+		unsigned short reserved1;	// é¢„ç•™åŒºåŸŸ1
+		unsigned short reserved2;	// é¢„ç•™åŒºåŸŸ2
+		unsigned long offset;		// å›¾åƒæ•°æ®å¼€å§‹ä½ç½®çš„åç§»
 	};
 
-	// BMP ĞÅÏ¢Í·
+	// BMP ä¿¡æ¯å¤´
 	struct BMPInfo
 	{
-		unsigned long size;				// ĞÅÏ¢Í·´óĞ¡
-		long width;						// Í¼Ïñ¿í¶È
-		long height;					// Í¼Ïñ¸ß¶È
-		unsigned short planes;			// Í¼ÏñÎ»ÃæÊı
-		unsigned short bits;			// Ã¿¸öÏñËØµÄÎ»Êı
-		unsigned long compression;		// Ñ¹Ëõ·½·¨
-		unsigned long sizeImage;		// Í¼Ïñ´óĞ¡£ºwidth * height * bits / 8
-		long xPixelsPerMeter;			// Ë®Æ½·Ö±æÂÊ
-		long yPixelsPerMeter;			// ´¹Ö±·Ö±æÂÊ
-		unsigned long colorUsed;		// Êµ¼ÊÊ¹ÓÃµÄÑÕÉ«±íÖĞµÄÑÕÉ«Êı
-		unsigned long colorImportant;	// ÖØÒªÑÕÉ«Êı
+		unsigned long size;				// ä¿¡æ¯å¤´å¤§å°
+		long width;						// å›¾åƒå®½åº¦
+		long height;					// å›¾åƒé«˜åº¦
+		unsigned short planes;			// å›¾åƒä½é¢æ•°
+		unsigned short bits;			// æ¯ä¸ªåƒç´ çš„ä½æ•°
+		unsigned long compression;		// å‹ç¼©æ–¹æ³•
+		unsigned long sizeImage;		// å›¾åƒå¤§å°ï¼šwidth * height * bits / 8
+		long xPixelsPerMeter;			// æ°´å¹³åˆ†è¾¨ç‡
+		long yPixelsPerMeter;			// å‚ç›´åˆ†è¾¨ç‡
+		unsigned long colorUsed;		// å®é™…ä½¿ç”¨çš„é¢œè‰²è¡¨ä¸­çš„é¢œè‰²æ•°
+		unsigned long colorImportant;	// é‡è¦é¢œè‰²æ•°
 	};
 #pragma pack(8)
 

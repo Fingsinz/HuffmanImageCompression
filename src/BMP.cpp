@@ -1,4 +1,4 @@
-#include "BMP.h"
+﻿#include "BMP.h"
 #include <memory>
 
 BMP::BMP(std::string const &path)
