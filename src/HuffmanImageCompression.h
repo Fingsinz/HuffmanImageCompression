@@ -5,12 +5,20 @@
 
 class HuffmanImageCompression : public QMainWindow
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    HuffmanImageCompression(QWidget *parent = nullptr);
-    ~HuffmanImageCompression();
+	HuffmanImageCompression(QWidget *parent = nullptr);
+	~HuffmanImageCompression();
 
 private:
-    Ui::HuffmanImageCompressionClass ui;
+	void setMenu();
+
+public slots:
+	void openImg();
+	void saveResult();
+	void huffmanCompress();
+
+private:
+	Ui::HuffmanImageCompressionClass ui;
 };
