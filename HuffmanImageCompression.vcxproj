@@ -116,6 +116,7 @@
     <QtRcc Include="src\HuffmanImageCompression.qrc" />
     <QtUic Include="src\HuffmanImageCompression.ui" />
     <QtMoc Include="src\HuffmanImageCompression.h" />
+    <ClCompile Include="src\HuffmanCoding.cpp" />
     <ClCompile Include="src\BMP.cpp" />
     <ClCompile Include="src\HuffmanImageCompression.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -129,6 +130,7 @@
     <Text Include="LICENSE.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\HuffmanCoding.h" />
     <ClInclude Include="src\BMP.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
