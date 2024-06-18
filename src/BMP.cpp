@@ -22,7 +22,8 @@ int BMP::load(std::string const &path)
 		return -2;
 
 	in.seekg(file.offset);
-	std::unique_ptr<char> data = std::make_unique<char>(info.width * info.height * 3);
+
+	std::unique_ptr<char[]> data = std::make_unique<char[]>(info.width * info.height * 3);
 	in.read(data.get(), info.width * info.height * 3);
 
 	char *ptr = data.get();
