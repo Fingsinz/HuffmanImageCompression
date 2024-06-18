@@ -14,7 +14,7 @@ public:
 private:
 	void setMenu();
 
-public slots:
+public Q_SLOTS:
 	void openImg();
 	void saveResult();
 	void huffmanCompress();
