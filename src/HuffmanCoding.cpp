@@ -51,7 +51,7 @@ void HuffmanCoding::buildHuffmanTree(std::vector<unsigned char> const &pixels)
 
 void HuffmanCoding::generateCodes(HuffmanNode *node, std::string code)
 {
-	if (root == nullptr)
+	if (node == nullptr)
 	{
 		return;
 	}

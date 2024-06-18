@@ -1,7 +1,9 @@
 #pragma once
 
-#include <QtWidgets/QMainWindow>
+#include "BMP.h"
+#include "HuffmanCoding.h"
 #include "ui_HuffmanImageCompression.h"
+#include <QtWidgets/QMainWindow>
 
 class HuffmanImageCompression : public QMainWindow
 {
@@ -21,4 +23,9 @@ public Q_SLOTS:
 
 private:
 	Ui::HuffmanImageCompressionClass ui;
+
+	BMP inputBmp;
+	HuffmanCoding *rHuffCoding, *gHuffCoding, *bHuffCoding;
+	std::vector<std::string> rCode, gCode, bCode;
+	std::vector<int> rFreq, gFreq, bFreq;
 };

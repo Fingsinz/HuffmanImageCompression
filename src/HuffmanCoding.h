@@ -28,7 +28,7 @@ private:
 	};
 
 private:
-	HuffmanNode *root;
+	HuffmanNode *root{ nullptr };
 	std::unordered_map<unsigned char, std::string> codes;
 
 private:
