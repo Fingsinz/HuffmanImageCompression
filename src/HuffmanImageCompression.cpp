@@ -25,3 +25,15 @@ void HuffmanImageCompression::setMenu()
 	operateMenu->setFont(font);
 	operateMenu->addAction(tr("哈夫曼压缩"), this, SLOT());
 }
+
+void HuffmanImageCompression::openImg()
+{
+}
+
+void HuffmanImageCompression::saveResult()
+{
+}
+
+void HuffmanImageCompression::huffmanCompress()
+{
+}
