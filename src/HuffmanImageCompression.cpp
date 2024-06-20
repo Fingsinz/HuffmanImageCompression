@@ -25,58 +25,92 @@ void HuffmanImageCompression::setMenu()
 
 	QMenu *fileMenu = ui.menuBar->addMenu(tr("文件"));
 	fileMenu->setFont(font);
-	fileMenu->addAction(tr("打开"), this, SLOT(openImg()))->setShortcut(QKeySequence::Open);
-	fileMenu->addAction(tr("保存"), this, SLOT())->setShortcut(QKeySequence::Save);
+	fileMenu->addAction(tr("打开"), this, SLOT(openFile()))->setShortcut(QKeySequence::Open);
+	fileMenu->addAction(tr("保存"), this, SLOT(saveFile()))->setShortcut(QKeySequence::Save);
 
 	QMenu *operateMenu = ui.menuBar->addMenu(tr("操作"));
 	operateMenu->setFont(font);
 	operateMenu->addAction(tr("哈夫曼压缩"), this, SLOT(huffmanCompress()));
 }
 
-void HuffmanImageCompression::openImg()
+void HuffmanImageCompression::openImg(QString const &fileName)
 {
-	QString fileName = QFileDialog::getOpenFileName(this, tr("打开图像"), "", "*.bmp");
+	int flag = inputBmp.load(fileName.toStdString());
+	switch (flag)
+	{
+		case -1:
+			ui.statusBar->showMessage(tr("打开文件失败"));
+			return;
+		case -2:
+			ui.statusBar->showMessage(tr("文件格式错误"));
+			return;
+		case 1:
+			ui.statusBar->showMessage(tr("打开文件成功"));
+			break;
+	}
+
+	QImage img(inputBmp.info.height, inputBmp.info.width, QImage::Format_RGB888);
+
+	for (int i = 0; i < inputBmp.info.height; i++)
+	{
+		for (int j = 0; j < inputBmp.info.width; j++)
+		{
+			img.setPixelColor(j, inputBmp.info.width - i, QColor(
+				inputBmp.imgData[i * inputBmp.info.width + j][2],
+				inputBmp.imgData[i * inputBmp.info.width + j][1],
+				inputBmp.imgData[i * inputBmp.info.width + j][0]));
+		}
+	}
+
+	QGraphicsScene *scene = new QGraphicsScene(ui.imgView);
+	scene->addPixmap(QPixmap::fromImage(img));
+	ui.imgView->setScene(scene);
+}
+
+void HuffmanImageCompression::openHuf(QString const &fileName)
+{}
+
+void HuffmanImageCompression::saveImg(QString const &fileName)
+{}
+
+void HuffmanImageCompression::saveHuf(QString const &fileName)
+{}
+
+void HuffmanImageCompression::openFile()
+{
+	QString fileName = QFileDialog::getOpenFileName(this, tr("打开文件"), "", "*.bmp *.huf");
 	ui.statusBar->showMessage(tr("打开 ") + fileName);
 
-	QThread *readTh = QThread::create([this, fileName] ()
-		{
-			int flag = inputBmp.load(fileName.toStdString());
-			switch (flag)
+	std::string suffix = fileName.toStdString().substr(fileName.toStdString().find_last_of("."), fileName.toStdString().length() - fileName.toStdString().find_last_of("."));
+
+	QThread *readTh = nullptr;
+
+	if (suffix == ".bmp")
+	{
+		readTh = QThread::create([this, fileName] ()
 			{
-				case -1:
-					ui.statusBar->showMessage(tr("打开文件失败"));
-					return;
-				case -2:
-					ui.statusBar->showMessage(tr("文件格式错误"));
-					return;
-				case 1:
-					ui.statusBar->showMessage(tr("打开文件成功"));
-					break;
-			}
+				openImg(fileName);
+			});
+	}
 
-			QImage img(inputBmp.info.height, inputBmp.info.width, QImage::Format_RGB888);
-
-			for (int i = 0; i < inputBmp.info.height; i++)
+	else if (suffix == ".huf")
+	{
+		readTh = QThread::create([this, fileName] ()
 			{
-				for (int j = 0; j < inputBmp.info.width; j++)
-				{
-					img.setPixelColor(j, inputBmp.info.width - i, QColor(
-						inputBmp.imgData[i * inputBmp.info.width + j][2],
-						inputBmp.imgData[i * inputBmp.info.width + j][1],
-						inputBmp.imgData[i * inputBmp.info.width + j][0]));
-				}
-			}
+				openHuf(fileName);
+			});
+	}
 
-			QGraphicsScene *scene = new QGraphicsScene(ui.imgView);
-			scene->addPixmap(QPixmap::fromImage(img));
-			ui.imgView->setScene(scene);
-		});
+	else
+	{
+		return;
+	}
 
 	readTh->setParent(this);
 	readTh->start();
 }
 
-void HuffmanImageCompression::saveResult()
+void HuffmanImageCompression::saveFile()
 {}
 
 void HuffmanImageCompression::huffmanCompress()
