@@ -46,10 +46,22 @@ public:
 	void coding(std::vector<unsigned char> const &pixels);
 
 	/**
+	 * @brief 对给定的像素执行编码操作
+	 * @param freq 字符频率
+	 */
+	void coding(std::vector<int> const &freq);
+
+	/**
 	 * @brief 基于给定像素构建哈夫曼树
 	 * @param pixels 像素数组
 	 */
 	void buildHuffmanTree(std::vector<unsigned char> const &pixels);
+
+	/**
+	 * @brief 基于给定像素构建哈夫曼树
+	 * @param freq 字符频率
+	 */
+	void buildHuffmanTree(std::vector<int> const &freq);
 
 	/**
 	 * @brief 为给定的哈夫曼节点生成哈夫曼代码

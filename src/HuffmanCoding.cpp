@@ -21,6 +21,12 @@ void HuffmanCoding::coding(std::vector<unsigned char> const &pixels)
 	generateCodes(root, "");
 }
 
+void HuffmanCoding::coding(std::vector<int> const &freq)
+{
+	buildHuffmanTree(freq);
+	generateCodes(root, "");
+}
+
 void HuffmanCoding::buildHuffmanTree(std::vector<unsigned char> const &pixels)
 {
 	std::unordered_map<unsigned char, int> freq;
@@ -34,6 +40,30 @@ void HuffmanCoding::buildHuffmanTree(std::vector<unsigned char> const &pixels)
 	for (auto &it : freq)
 	{
 		pq.push(new HuffmanNode(it.first, it.second));
+	}
+
+	// 构建哈夫曼树
+	while (pq.size() > 1)
+	{
+		HuffmanNode *left = pq.top();
+		pq.pop();
+		HuffmanNode *right = pq.top();
+		pq.pop();
+		pq.push(new HuffmanNode(-1, left->frequency + right->frequency, left, right));
+	}
+
+	root = pq.top();
+}
+
+void HuffmanCoding::buildHuffmanTree(std::vector<int> const &freq)
+{
+	std::priority_queue < HuffmanNode *, std::vector<HuffmanNode *>, HuffmanNodeComparator > pq;
+
+	// 排序
+	for (int i = 0; i < 256; i ++)
+	{
+		if (freq[i] != 0)
+			pq.push(new HuffmanNode(i, freq[i]));
 	}
 
 	// 构建哈夫曼树
