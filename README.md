@@ -24,33 +24,44 @@ Key Words: Programming Thinking, Data Structures, File Reading and Writing, C++/
 
 ## 效果展示 / Effect display
 
+<img style="zoom:33%;" src="example/lena.jpg" />
+<table>
+    <caption>
+		<strong>测试1 / Test1：lena.bmp</strong>
+	</caption>
+    <tr>
+        <td>lena.bmp : 733 KB</td>
+       	<td>lena.huf : 673 KB</td>
+        <td>lena.jpg : 38 KB</td>
+        <td>lena.png : 403 KB</td>
+    </tr>
+</table>
+<p>压缩率(之后/之前) / Compressibility (After/Before): 91.81%</p>
 
-测试1 / Test1：lena.bmp
+<img style="zoom:33%;" src="example/RGB.jpg" />
+<table>
+    <caption>
+		<strong>测试2 / Test2：RGB.bmp</strong>
+	</caption>
+    <tr>
+        <td>RGB.bmp : 733 KB</td>
+       	<td>RGB.huf : 92 KB</td>
+        <td>RGB.jpg : 7 KB</td>
+        <td>RGB.png : 2 KB</td>
+    </tr>
+</table>
+<p>压缩率(之后/之前) / Compressibility (After/Before): 12.55%</p>
 
-![](example/lena.jpg)
-
-| lena.bmp | lena.huf | lena.jpg | lena.png |
-|:-:|:-:|:-:|:-:|
-| 733 KB | 673 KB | 38 KB | 403 KB |
-
-压缩率(之后/之前) / Compressibility (After / Before)：91.81%
-
-测试2 / Test2：RGB.bmp
-
-![](example/RGB.jpg)
-
-| RGB.bmp | RGB.huf | RGB.jpg | RGB.png |
-|:-:|:-:|:-:|:-:|
-| 733 KB | 92 KB | 7 KB | 2 KB |
-
-压缩率(之后/之前) / Compressibility (After / Before)：12.55%
-
-测试3 / Test3：butterfly.bmp
-
-![](example/butterfly.jpg)
-
-| butterfly.bmp | butterfly.huf | butterfly.jpg | butterfly.png |
-|:-:|:-:|:-:|:-:|
-| 193 KB | 178 KB | 17 KB | 121 KB |
-
-压缩率(之后/之前) / Compressibility (After / Before)：92.23%
+<img style="zoom:33%;" src="example/butterfly.jpg" />
+<table>
+    <caption>
+		<strong>测试3 / Test3：butterfly.bmp</strong>
+	</caption>
+    <tr>
+        <td>butterfly.bmp : 733 KB</td>
+       	<td>butterfly.huf : 92 KB</td>
+        <td>butterfly.jpg : 7 KB</td>
+        <td>butterfly.png : 2 KB</td>
+    </tr>
+</table>
+<p>压缩率(之后/之前) / Compressibility (After/Before): 92.23%</p>
