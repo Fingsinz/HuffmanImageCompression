@@ -21,34 +21,27 @@ HuffmanImageCompression::~HuffmanImageCompression()
 
 void HuffmanImageCompression::setMenu()
 {
-	QFont font(tr("微软雅黑 Light"), 14);
+	QFont font(tr("微软雅黑 Light"), 12);
 	this->setFont(font);
 
 	QMenu *fileMenu = ui.menuBar->addMenu(tr("文件"));
 	fileMenu->setFont(font);
 	fileMenu->addAction(tr("打开"), this, SLOT(openFile()))->setShortcut(QKeySequence::Open);
-	fileMenu->addAction(tr("保存"), this, SLOT(saveFile()))->setShortcut(QKeySequence::Save);
+	QMenu *saveMenu = fileMenu->addMenu(tr("保存为.."));
+	saveMenu->setFont(font);
+	saveMenu->addAction(tr("保存为图片"), this, SLOT(saveImg()))->setShortcut(QKeySequence::Save);
+	saveMenu->addAction(tr("保存为Huffman文件"), this, SLOT(saveHuf()))->setShortcut(QKeySequence::SaveAs);
 
 	QMenu *operateMenu = ui.menuBar->addMenu(tr("操作"));
 	operateMenu->setFont(font);
 	operateMenu->addAction(tr("哈夫曼压缩"), this, SLOT(huffmanCompress()));
 }
 
-void HuffmanImageCompression::openImg(QString const &fileName)
+int HuffmanImageCompression::openImg(QString const &fileName)
 {
 	int flag = inputBmp.load(fileName.toStdString());
-	switch (flag)
-	{
-		case -1:
-			ui.statusBar->showMessage(tr("打开文件失败"));
-			return;
-		case -2:
-			ui.statusBar->showMessage(tr("文件格式错误"));
-			return;
-		case 1:
-			ui.statusBar->showMessage(tr("打开文件成功"));
-			break;
-	}
+	if (flag != 0)
+		return flag;
 
 	QImage img(inputBmp.info.height, inputBmp.info.width, QImage::Format_RGB888);
 
@@ -63,18 +56,21 @@ void HuffmanImageCompression::openImg(QString const &fileName)
 		}
 	}
 
+	mImg = img;
 	QGraphicsScene *scene = new QGraphicsScene(ui.imgView);
 	scene->addPixmap(QPixmap::fromImage(img));
 	ui.imgView->setScene(scene);
+
+	return flag;
 }
 
-void HuffmanImageCompression::openHuf(QString const &fileName)
+int HuffmanImageCompression::openHuf(QString const &fileName)
 {
 	std::ifstream in(fileName.toStdString(), std::ios::in | std::ios::binary);
 
 	if (!in.is_open())
 	{
-		return;
+		return -1;
 	}
 
 	std::vector<int>(256, 0).swap(rFreq);
@@ -84,6 +80,9 @@ void HuffmanImageCompression::openHuf(QString const &fileName)
 	int height = 0, width = 0;
 	in.read(reinterpret_cast<char *>(&height), 4);
 	in.read(reinterpret_cast<char *>(&width), 4);
+
+	if (height == 0 or width == 0)
+		return -2;
 
 	int freqByte = 0;
 	unsigned char ch = 0;
@@ -181,206 +180,269 @@ void HuffmanImageCompression::openHuf(QString const &fileName)
 		}
 	}
 
+	mImg = img;
 	QGraphicsScene *scene = new QGraphicsScene(ui.imgView);
 	scene->addPixmap(QPixmap::fromImage(img));
 	ui.imgView->setScene(scene);
+
+	return 0;
 }
 
-void HuffmanImageCompression::saveImg(QString const &fileName)
-{}
-
-void HuffmanImageCompression::saveHuf(QString const &fileName)
+void HuffmanImageCompression::saveImg()
 {
-	if (rHuffCoding == nullptr or gHuffCoding == nullptr or bHuffCoding == nullptr)
-		return;
-
-	std::ofstream out(fileName.toStdString(), std::ios::out | std::ios::binary);
-
-	if (!out.is_open())
+	QString fileName = QFileDialog::getSaveFileName(this, tr("保存为图像文件"), "", "*.jpg .png .bmp");
+	if (fileName.isEmpty())
 	{
 		return;
 	}
 
-	int height = inputBmp.info.height, width = inputBmp.info.width;
-
-	out.write(reinterpret_cast<char *>(&height), 4);
-	out.write(reinterpret_cast<char *>(&width), 4);
-
-	int freqByte = 0;
-
-	// 存储红色像素及其频率
-	freqByte = 0;
-	for (int x : rFreq)
-	{
-		if (x != 0)
-			freqByte += 1;
-	}
-	freqByte *= 5;
-	out.write(reinterpret_cast<char *>(&freqByte), 4);
-	for (int i = 0; i < 256; ++ i)
-	{
-		if (rFreq[i] != 0)
+	int result = -1;
+	QThread *saveTh = QThread::create([this, &fileName, &result] ()
 		{
-			unsigned char r = i;
-			out.write(reinterpret_cast<char *>(&r), 1);
-			out.write(reinterpret_cast<char *>(&rFreq[i]), 4);
-		}
-	}
+			mImg.save(fileName);
+			result = 0;
+		});
 
-	// 存储绿色像素及其频率
-	freqByte = 0;
-	for (int x : gFreq)
+	saveTh->setParent(this);
+	saveTh->start();
+	saveTh->wait();
+
+	switch (result)
 	{
-		if (x != 0)
-			freqByte += 1;
+		case 0:
+			QMessageBox::information(this, tr("提示"), tr("保存文件成功"));
+			break;
+		case -1:
+			QMessageBox::warning(this, tr("警告"), tr("保存文件失败"));
+			break;
+		default:
+			break;
 	}
-	freqByte *= 5;
-	out.write(reinterpret_cast<char *>(&freqByte), 4);
-	for (int i = 0; i < 256; ++ i)
+}
+
+void HuffmanImageCompression::saveHuf()
+{
+	QString fileName = QFileDialog::getSaveFileName(this, tr("保存Huffman压缩文件"), "", "*.huf");
+
+	if (fileName.isEmpty())
 	{
-		if (gFreq[i] != 0)
-		{
-			unsigned char g = i;
-			out.write(reinterpret_cast<char *>(&g), 1);
-			out.write(reinterpret_cast<char *>(&gFreq[i]), 4);
-		}
+		return;
 	}
 
-	// 存储蓝色像素及其频率
-	freqByte = 0;
-	for (int x : bFreq)
+	int result = -1;
+	QThread *readTh = QThread::create([this, &fileName, &result] ()
+		{
+			if (rHuffCoding == nullptr or gHuffCoding == nullptr or bHuffCoding == nullptr)
+				return -2;
+
+			std::ofstream out(fileName.toLocal8Bit(), std::ios::out | std::ios::binary);
+
+			if (!out.is_open())
+			{
+				return -1;
+			}
+
+			int height = inputBmp.info.height, width = inputBmp.info.width;
+
+			out.write(reinterpret_cast<char *>(&height), 4);
+			out.write(reinterpret_cast<char *>(&width), 4);
+
+			int freqByte = 0;
+
+			// 存储红色像素及其频率
+			freqByte = 0;
+			for (int x : rFreq)
+			{
+				if (x != 0)
+					freqByte += 1;
+			}
+			freqByte *= 5;
+			out.write(reinterpret_cast<char *>(&freqByte), 4);
+			for (int i = 0; i < 256; ++ i)
+			{
+				if (rFreq[i] != 0)
+				{
+					unsigned char r = i;
+					out.write(reinterpret_cast<char *>(&r), 1);
+					out.write(reinterpret_cast<char *>(&rFreq[i]), 4);
+				}
+			}
+
+			// 存储绿色像素及其频率
+			freqByte = 0;
+			for (int x : gFreq)
+			{
+				if (x != 0)
+					freqByte += 1;
+			}
+			freqByte *= 5;
+			out.write(reinterpret_cast<char *>(&freqByte), 4);
+			for (int i = 0; i < 256; ++ i)
+			{
+				if (gFreq[i] != 0)
+				{
+					unsigned char g = i;
+					out.write(reinterpret_cast<char *>(&g), 1);
+					out.write(reinterpret_cast<char *>(&gFreq[i]), 4);
+				}
+			}
+
+			// 存储蓝色像素及其频率
+			freqByte = 0;
+			for (int x : bFreq)
+			{
+				if (x != 0)
+					freqByte += 1;
+			}
+			freqByte *= 5;
+			out.write(reinterpret_cast<char *>(&freqByte), 4);
+			for (int i = 0; i < 256; ++ i)
+			{
+				if (bFreq[i] != 0)
+				{
+					unsigned char b = i;
+					out.write(reinterpret_cast<char *>(&b), 1);
+					out.write(reinterpret_cast<char *>(&bFreq[i]), 4);
+				}
+			}
+
+			int allLen = 0;
+			int nowBit = 0, k = 0;
+			char data = 0;
+
+			// 存储红色像素编码
+			std::string rCodeStr = "";
+			for (std::string const &s : rCode)
+				rCodeStr += s;
+			allLen = rCodeStr.length();
+			int needByte = allLen / 8 + (allLen % 8 != 0 ? 1 : 0);
+			out.write(reinterpret_cast<char const *>(&allLen), 4);		// 存储编码长度
+			out.write(reinterpret_cast<char const *>(&needByte), 4);	// 存储编码需要的字节数
+			char *buf = new char[needByte];
+
+			nowBit = 0, k = 0, data = 0;
+			for (int i = 0; i < allLen; ++ i)
+			{
+				char c = rCodeStr[i] - '0';
+
+				if (nowBit == 8)
+				{
+					buf[k ++] = data;
+					nowBit = 0, data = 0;
+					i -= 1;
+				}
+
+				else if (nowBit < 8)
+				{
+					data += c;
+					if (nowBit < 7)
+						data <<= 1;
+					nowBit += 1;
+				}
+			}
+			while (nowBit < 7)
+				data <<= 1, nowBit += 1;
+			buf[k] = data;
+
+			out.write(buf, needByte);
+			delete[] buf;
+
+			// 存储绿色像素编码
+			std::string gCodeStr = "";
+			for (std::string const &s : gCode)
+				gCodeStr += s;
+			allLen = gCodeStr.length();
+			needByte = allLen / 8 + (allLen % 8 != 0 ? 1 : 0);
+			out.write(reinterpret_cast<char const *>(&allLen), 4);		// 存储编码长度
+			out.write(reinterpret_cast<char const *>(&needByte), 4);	// 存储编码需要的字节数
+			buf = new char[needByte];
+
+			nowBit = 0, k = 0, data = 0;
+			for (int i = 0; i < allLen; ++ i)
+			{
+				char c = gCodeStr[i] - '0';
+
+				if (nowBit == 8)
+				{
+					buf[k ++] = data;
+					nowBit = 0, data = 0;
+					i -= 1;
+				}
+
+				else if (nowBit < 8)
+				{
+					data += c;
+					if (nowBit < 7)
+						data <<= 1;
+					nowBit += 1;
+				}
+			}
+			while (nowBit < 7)
+				data <<= 1, nowBit += 1;
+			buf[k] = data;
+
+			out.write(buf, needByte);
+			delete[] buf;
+
+			// 存储蓝色像素编码
+			std::string bCodeStr = "";
+			for (std::string const &s : bCode)
+				bCodeStr += s;
+			allLen = bCodeStr.length();
+			needByte = allLen / 8 + (allLen % 8 != 0 ? 1 : 0);
+			out.write(reinterpret_cast<char const *>(&allLen), 4);		// 存储编码长度
+			out.write(reinterpret_cast<char const *>(&needByte), 4);	// 存储编码需要的字节数
+			buf = new char[needByte];
+
+			nowBit = 0, k = 0, data = 0;
+			for (int i = 0; i < allLen; ++ i)
+			{
+				char c = bCodeStr[i] - '0';
+
+				if (nowBit == 8)
+				{
+					buf[k ++] = data;
+					nowBit = 0, data = 0;
+					i -= 1;
+				}
+
+				else if (nowBit < 8)
+				{
+					data += c;
+					if (nowBit < 7)
+						data <<= 1;
+					nowBit += 1;
+				}
+			}
+			while (nowBit < 7)
+				data <<= 1, nowBit += 1;
+			buf[k] = data;
+
+			out.write(buf, needByte);
+			delete[] buf;
+
+			out.close();
+			result = 0;
+		});
+
+	readTh->setParent(this);
+	readTh->start();
+	readTh->wait();
+
+	switch (result)
 	{
-		if (x != 0)
-			freqByte += 1;
+		case 0:
+			QMessageBox::information(this, tr("提示"), tr("保存文件成功"));
+			break;
+		case -1:
+			QMessageBox::warning(this, tr("警告"), tr("保存文件失败"));
+			break;
+		case -2:
+			QMessageBox::warning(this, tr("警告"), tr("未进行哈夫曼压缩"));
+			break;
+		default:
+			break;
 	}
-	freqByte *= 5;
-	out.write(reinterpret_cast<char *>(&freqByte), 4);
-	for (int i = 0; i < 256; ++ i)
-	{
-		if (bFreq[i] != 0)
-		{
-			unsigned char b = i;
-			out.write(reinterpret_cast<char *>(&b), 1);
-			out.write(reinterpret_cast<char *>(&bFreq[i]), 4);
-		}
-	}
-
-	int allLen = 0;
-	int nowBit = 0, k = 0;
-	char data = 0;
-
-	// 存储红色像素编码
-	std::string rCodeStr = "";
-	for (std::string const &s : rCode)
-		rCodeStr += s;
-	allLen = rCodeStr.length();
-	int needByte = allLen / 8 + (allLen % 8 != 0 ? 1 : 0);
-	out.write(reinterpret_cast<char const *>(&allLen), 4);		// 存储编码长度
-	out.write(reinterpret_cast<char const *>(&needByte), 4);	// 存储编码需要的字节数
-	char *buf = new char[needByte];
-
-	nowBit = 0, k = 0, data = 0;
-	for (int i = 0; i < allLen; ++ i)
-	{
-		char c = rCodeStr[i] - '0';
-
-		if (nowBit == 8)
-		{
-			buf[k ++] = data;
-			nowBit = 0, data = 0;
-			i -= 1;
-		}
-
-		else if (nowBit < 8)
-		{
-			data += c;
-			if (nowBit < 7)
-				data <<= 1;
-			nowBit += 1;
-		}
-	}
-	while (nowBit < 7)
-		data <<= 1, nowBit += 1;
-	buf[k] = data;
-
-	out.write(buf, needByte);
-	delete[] buf;
-
-	// 存储绿色像素编码
-	std::string gCodeStr = "";
-	for (std::string const &s : gCode)
-		gCodeStr += s;
-	allLen = gCodeStr.length();
-	needByte = allLen / 8 + (allLen % 8 != 0 ? 1 : 0);
-	out.write(reinterpret_cast<char const *>(&allLen), 4);		// 存储编码长度
-	out.write(reinterpret_cast<char const *>(&needByte), 4);	// 存储编码需要的字节数
-	buf = new char[needByte];
-
-	nowBit = 0, k = 0, data = 0;
-	for (int i = 0; i < allLen; ++ i)
-	{
-		char c = gCodeStr[i] - '0';
-
-		if (nowBit == 8)
-		{
-			buf[k ++] = data;
-			nowBit = 0, data = 0;
-			i -= 1;
-		}
-
-		else if (nowBit < 8)
-		{
-			data += c;
-			if (nowBit < 7)
-				data <<= 1;
-			nowBit += 1;
-		}
-	}
-	while (nowBit < 7)
-		data <<= 1, nowBit += 1;
-	buf[k] = data;
-
-	out.write(buf, needByte);
-	delete[] buf;
-
-	// 存储蓝色像素编码
-	std::string bCodeStr = "";
-	for (std::string const &s : bCode)
-		bCodeStr += s;
-	allLen = bCodeStr.length();
-	needByte = allLen / 8 + (allLen % 8 != 0 ? 1 : 0);
-	out.write(reinterpret_cast<char const *>(&allLen), 4);		// 存储编码长度
-	out.write(reinterpret_cast<char const *>(&needByte), 4);	// 存储编码需要的字节数
-	buf = new char[needByte];
-
-	nowBit = 0, k = 0, data = 0;
-	for (int i = 0; i < allLen; ++ i)
-	{
-		char c = bCodeStr[i] - '0';
-
-		if (nowBit == 8)
-		{
-			buf[k ++] = data;
-			nowBit = 0, data = 0;
-			i -= 1;
-		}
-
-		else if (nowBit < 8)
-		{
-			data += c;
-			if (nowBit < 7)
-				data <<= 1;
-			nowBit += 1;
-		}
-	}
-	while (nowBit < 7)
-		data <<= 1, nowBit += 1;
-	buf[k] = data;
-
-	out.write(buf, needByte);
-	delete[] buf;
-
-	out.close();
 }
 
 void HuffmanImageCompression::openFile()
@@ -391,79 +453,60 @@ void HuffmanImageCompression::openFile()
 		return;
 	}
 
+	clear();
 	ui.imgView->setScene(nullptr);
+
+	std::string suffix = fileName.toStdString().substr(fileName.toStdString().find_last_of("."), fileName.toStdString().length() - fileName.toStdString().find_last_of("."));
+
+	QThread *readTh = nullptr;
+	int result = 0;
+
+	if (suffix == ".bmp")
+	{
+		readTh = QThread::create([this, fileName, &result] ()
+			{
+				result = openImg(fileName);
+			});
+	}
+
+	else if (suffix == ".huf")
+	{
+		readTh = QThread::create([this, fileName, &result] ()
+			{
+				result = openHuf(fileName);
+			});
+	}
+
+	else
+	{
+		return;
+	}
+
+	readTh->setParent(this);
+	readTh->start();
+	readTh->wait();
+
+	switch (result)
+	{
+		case 0:
+			QMessageBox::information(this, tr("提示"), tr("打开文件成功"));
+			break;
+		case -1:
+			QMessageBox::warning(this, tr("警告"), tr("打开文件失败"));
+			return;
+		case -2:
+			QMessageBox::warning(this, tr("警告"), tr("文件格式错误"));
+			return;
+		default:
+			break;
+	}
+}
+
+void HuffmanImageCompression::clear()
+{
 	delete rHuffCoding; rHuffCoding = nullptr;
 	delete gHuffCoding; gHuffCoding = nullptr;
 	delete bHuffCoding; bHuffCoding = nullptr;
-
-	std::string suffix = fileName.toStdString().substr(fileName.toStdString().find_last_of("."), fileName.toStdString().length() - fileName.toStdString().find_last_of("."));
-
-	QThread *readTh = nullptr;
-
-	if (suffix == ".bmp")
-	{
-		readTh = QThread::create([this, fileName] ()
-			{
-				openImg(fileName);
-			});
-	}
-
-	else if (suffix == ".huf")
-	{
-		readTh = QThread::create([this, fileName] ()
-			{
-				openHuf(fileName);
-			});
-	}
-
-	else
-	{
-		return;
-	}
-
-	readTh->setParent(this);
-	readTh->start();
-
-	QMessageBox::information(this, tr("提示"), tr("读入成功"));
-}
-
-void HuffmanImageCompression::saveFile()
-{
-	QString fileName = QFileDialog::getSaveFileName(this, tr("保存文件"), "", "*.bmp *.huf");
-	if (fileName.isEmpty())
-	{
-		return;
-	}
-
-	std::string suffix = fileName.toStdString().substr(fileName.toStdString().find_last_of("."), fileName.toStdString().length() - fileName.toStdString().find_last_of("."));
-
-	QThread *readTh = nullptr;
-
-	if (suffix == ".bmp")
-	{
-		readTh = QThread::create([this, fileName] ()
-			{
-				saveImg(fileName);
-			});
-	}
-
-	else if (suffix == ".huf")
-	{
-		readTh = QThread::create([this, fileName] ()
-			{
-				saveHuf(fileName);
-			});
-	}
-
-	else
-	{
-		return;
-	}
-
-	readTh->setParent(this);
-	readTh->start();
-
-	QMessageBox::information(this, tr("提示"), tr("保存成功"));
 }
 
 void HuffmanImageCompression::huffmanCompress()
@@ -471,9 +514,7 @@ void HuffmanImageCompression::huffmanCompress()
 	if (inputBmp.imgData.empty())
 		return;
 
-	delete rHuffCoding; rHuffCoding = nullptr;
-	delete gHuffCoding; gHuffCoding = nullptr;
-	delete bHuffCoding; bHuffCoding = nullptr;
+	clear();
 
 	QThread *rChannel = QThread::create([this] ()
 		{
@@ -550,5 +591,5 @@ void HuffmanImageCompression::huffmanCompress()
 	rChannel->setParent(this), gChannel->setParent(this), bChannel->setParent(this);
 	rChannel->start(), gChannel->start(), bChannel->start();
 
-	QMessageBox::information(this, tr("提示"), tr("压缩成功"));
+	ui.statusBar->showMessage(tr("经过哈夫曼编码"));
 }

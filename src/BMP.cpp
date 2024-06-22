@@ -50,5 +50,5 @@ int BMP::load(std::string const &path)
 	}
 
 	in.close();
-	return true;
+	return 0;
 }
