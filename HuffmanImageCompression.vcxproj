@@ -129,7 +129,7 @@
   <ItemGroup>
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
-    <None Include="README.md" />
+    <None Include="README" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt" />
