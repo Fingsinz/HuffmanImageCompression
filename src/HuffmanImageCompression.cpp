@@ -113,8 +113,6 @@ void HuffmanImageCompression::openHuf(QString const &fileName)
 		bFreq[ch] = freq;
 	}
 
-	delete rHuffCoding, delete gHuffCoding, delete bHuffCoding;
-
 	rHuffCoding = new HuffmanCoding();
 	gHuffCoding = new HuffmanCoding();
 	bHuffCoding = new HuffmanCoding();
@@ -187,12 +185,9 @@ void HuffmanImageCompression::openHuf(QString const &fileName)
 	scene->addPixmap(QPixmap::fromImage(img));
 	ui.imgView->setScene(scene);
 
-	std::ofstream outHuf("check2.txt", std::ios::out | std::ios::binary);
-	for (int i = 0; i < 256; ++ i)
-	{
-		outHuf << rHuffCoding->getHuffmanCode(i) << "\n";
-	}
-	outHuf.close();
+	std::ofstream outHuff("check2.txt", std::ios::out | std::ios::binary);
+	outHuff << rCode << "\n" << gCode << "\n" << bCode;
+	outHuff.close();
 }
 
 void HuffmanImageCompression::saveImg(QString const &fileName)
@@ -200,6 +195,9 @@ void HuffmanImageCompression::saveImg(QString const &fileName)
 
 void HuffmanImageCompression::saveHuf(QString const &fileName)
 {
+	if (rHuffCoding == nullptr or gHuffCoding == nullptr or bHuffCoding == nullptr)
+		return;
+
 	std::ofstream out(fileName.toStdString(), std::ios::out | std::ios::binary);
 
 	if (!out.is_open())
@@ -271,133 +269,140 @@ void HuffmanImageCompression::saveHuf(QString const &fileName)
 		}
 	}
 
-	// 存储红色像素编码
 	int allLen = 0;
+	int nowBit = 0, k = 0;
+	char data = 0;
+
+	// 存储红色像素编码
+	std::string rCodeStr = "";
 	for (std::string const &s : rCode)
-		allLen += s.length();
+		rCodeStr += s;
+	allLen = rCodeStr.length();
 	int needByte = allLen / 8 + (allLen % 8 != 0 ? 1 : 0);
 	out.write(reinterpret_cast<char const *>(&allLen), 4);		// 存储编码长度
 	out.write(reinterpret_cast<char const *>(&needByte), 4);	// 存储编码需要的字节数
 	char *buf = new char[needByte];
 
-	int nowBit = 0, k = 0;
-	char data = 0;
-	for (int i = 0; i < rCode.size(); ++ i)
+	nowBit = 0, k = 0, data = 0;
+	for (int i = 0; i < allLen; ++ i)
 	{
-		for (int j = 0; j < rCode[i].size(); ++ j)
+		char c = rCodeStr[i] - '0';
+
+		if (nowBit == 8)
 		{
-			char c = rCode[i][j] - '0';
-			if (nowBit < 8)
-			{
-				data += c;
+			buf[k ++] = data;
+			nowBit = 0, data = 0;
+			i -= 1;
+		}
+
+		else if (nowBit < 8)
+		{
+			data += c;
+			if (nowBit < 7)
 				data <<= 1;
-			}
-
-			else
-			{
-				buf[k ++] = data;
-				data = 0;
-				nowBit = 0;
-			}
-
 			nowBit += 1;
 		}
 	}
+	while (nowBit < 7)
+		data <<= 1, nowBit += 1;
+	buf[k] = data;
+
 	out.write(buf, needByte);
 	delete[] buf;
 
 	// 存储绿色像素编码
-	allLen = 0;
+	std::string gCodeStr = "";
 	for (std::string const &s : gCode)
-		allLen += s.length();
+		gCodeStr += s;
+	allLen = gCodeStr.length();
 	needByte = allLen / 8 + (allLen % 8 != 0 ? 1 : 0);
 	out.write(reinterpret_cast<char const *>(&allLen), 4);		// 存储编码长度
 	out.write(reinterpret_cast<char const *>(&needByte), 4);	// 存储编码需要的字节数
 	buf = new char[needByte];
 
-	nowBit = 0, k = 0;
-	data = 0;
-	for (int i = 0; i < gCode.size(); ++ i)
+	nowBit = 0, k = 0, data = 0;
+	for (int i = 0; i < allLen; ++ i)
 	{
-		for (int j = 0; j < gCode[i].size(); ++ j)
+		char c = gCodeStr[i] - '0';
+
+		if (nowBit == 8)
 		{
-			char c = gCode[i][j] - '0';
-			if (nowBit < 8)
-			{
-				data += c;
+			buf[k ++] = data;
+			nowBit = 0, data = 0;
+			i -= 1;
+		}
+
+		else if (nowBit < 8)
+		{
+			data += c;
+			if (nowBit < 7)
 				data <<= 1;
-			}
-
-			else
-			{
-				buf[k ++] = data;
-				data = 0;
-				nowBit = 0;
-			}
-
 			nowBit += 1;
 		}
 	}
+	while (nowBit < 7)
+		data <<= 1, nowBit += 1;
+	buf[k] = data;
+
 	out.write(buf, needByte);
 	delete[] buf;
 
 	// 存储蓝色像素编码
-	allLen = 0;
+	std::string bCodeStr = "";
 	for (std::string const &s : bCode)
-		allLen += s.length();
+		bCodeStr += s;
+	allLen = bCodeStr.length();
 	needByte = allLen / 8 + (allLen % 8 != 0 ? 1 : 0);
 	out.write(reinterpret_cast<char const *>(&allLen), 4);		// 存储编码长度
 	out.write(reinterpret_cast<char const *>(&needByte), 4);	// 存储编码需要的字节数
 	buf = new char[needByte];
 
-	nowBit = 0, k = 0;
-	data = 0;
-	for (int i = 0; i < bCode.size(); ++ i)
+	nowBit = 0, k = 0, data = 0;
+	for (int i = 0; i < allLen; ++ i)
 	{
-		for (int j = 0; j < bCode[i].size(); ++ j)
+		char c = bCodeStr[i] - '0';
+
+		if (nowBit == 8)
 		{
-			char c = bCode[i][j] - '0';
-			if (nowBit < 8)
-			{
-				data += c;
+			buf[k ++] = data;
+			nowBit = 0, data = 0;
+			i -= 1;
+		}
+
+		else if (nowBit < 8)
+		{
+			data += c;
+			if (nowBit < 7)
 				data <<= 1;
-			}
-
-			else
-			{
-				buf[k ++] = data;
-				data = 0;
-				nowBit = 0;
-			}
-
 			nowBit += 1;
 		}
 	}
+	while (nowBit < 7)
+		data <<= 1, nowBit += 1;
+	buf[k] = data;
+
 	out.write(buf, needByte);
 	delete[] buf;
 
 	out.close();
 
 	std::ofstream outHuf("check1.txt", std::ios::out | std::ios::binary);
-	for (int i = 0; i < 256; ++ i)
-	{
-		outHuf << rHuffCoding->getHuffmanCode(i) << "\n";
-	}
+	outHuf << rCodeStr << "\n" << gCodeStr << "\n" << bCodeStr;
 	outHuf.close();
 }
 
 void HuffmanImageCompression::openFile()
 {
-	ui.imgView->setScene(nullptr);
-	delete rHuffCoding;
-	delete gHuffCoding;
-	delete bHuffCoding;
-
 	QString fileName = QFileDialog::getOpenFileName(this, tr("打开文件"), "", "*.bmp *.huf");
 	if (fileName.isEmpty())
 	{
 		return;
 	}
+
+	ui.imgView->setScene(nullptr);
+	delete rHuffCoding; rHuffCoding = nullptr;
+	delete gHuffCoding; gHuffCoding = nullptr;
+	delete bHuffCoding; bHuffCoding = nullptr;
 
 	std::string suffix = fileName.toStdString().substr(fileName.toStdString().find_last_of("."), fileName.toStdString().length() - fileName.toStdString().find_last_of("."));
 
@@ -474,9 +479,9 @@ void HuffmanImageCompression::huffmanCompress()
 	if (inputBmp.imgData.empty())
 		return;
 
-	delete rHuffCoding;
-	delete gHuffCoding;
-	delete bHuffCoding;
+	delete rHuffCoding; rHuffCoding = nullptr;
+	delete gHuffCoding; gHuffCoding = nullptr;
+	delete bHuffCoding; bHuffCoding = nullptr;
 
 	QThread *rChannel = QThread::create([this] ()
 		{
@@ -554,17 +559,4 @@ void HuffmanImageCompression::huffmanCompress()
 	rChannel->start(), gChannel->start(), bChannel->start();
 
 	QMessageBox::information(this, tr("提示"), tr("压缩成功"));
-
-	//delete rHuffCoding;
-
-	//rHuffCoding = new HuffmanCoding();
-
-	//rHuffCoding->coding(rFreq);
-
-	//std::ofstream out("check3.txt", std::ios::out | std::ios::binary);
-
-	//for (int i = 0; i < 256; i ++)
-	//	out << rHuffCoding->getHuffmanCode(i) << "\n";
-
-	//out.close();
 }
