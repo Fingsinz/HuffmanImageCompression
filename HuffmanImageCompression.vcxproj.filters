@@ -50,7 +50,7 @@
   <ItemGroup>
     <None Include=".gitattributes" />
     <None Include=".gitignore" />
-    <None Include="README" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="LICENSE.txt" />
