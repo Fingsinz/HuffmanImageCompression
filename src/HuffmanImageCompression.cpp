@@ -184,10 +184,6 @@ void HuffmanImageCompression::openHuf(QString const &fileName)
 	QGraphicsScene *scene = new QGraphicsScene(ui.imgView);
 	scene->addPixmap(QPixmap::fromImage(img));
 	ui.imgView->setScene(scene);
-
-	std::ofstream outHuff("check2.txt", std::ios::out | std::ios::binary);
-	outHuff << rCode << "\n" << gCode << "\n" << bCode;
-	outHuff.close();
 }
 
 void HuffmanImageCompression::saveImg(QString const &fileName)
@@ -385,10 +381,6 @@ void HuffmanImageCompression::saveHuf(QString const &fileName)
 	delete[] buf;
 
 	out.close();
-
-	std::ofstream outHuf("check1.txt", std::ios::out | std::ios::binary);
-	outHuf << rCodeStr << "\n" << gCodeStr << "\n" << bCodeStr;
-	outHuf.close();
 }
 
 void HuffmanImageCompression::openFile()
